@@ -2,7 +2,9 @@ name: Build caramelChat
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - fix-x11-controller
   pull_request:
     branches: [ master ]
 
