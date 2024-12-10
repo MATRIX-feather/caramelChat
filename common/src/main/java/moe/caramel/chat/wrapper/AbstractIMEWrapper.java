@@ -4,12 +4,15 @@ import moe.caramel.chat.Main;
 import moe.caramel.chat.driver.IOperator;
 import moe.caramel.chat.util.ModLogger;
 import moe.caramel.chat.util.Rect;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Abstract IME Wrapper
  */
 public abstract class AbstractIMEWrapper {
 
+    private static final Logger log = LoggerFactory.getLogger(AbstractIMEWrapper.class);
     private final IOperator ime;
     private InputStatus status = InputStatus.NONE;
     private int firstEndPos = -1, secondStartPos = -1;
@@ -116,12 +119,8 @@ public abstract class AbstractIMEWrapper {
 
     // ================================
 
-    /**
-     * (1) Appends preview text to the current input value.
-     *
-     * @param typing preview text
-     */
-    public final void appendPreviewText(final String typing) {
+    private void doAppendPreviewText(final String typing)
+    {
         if (!this.editable()) {
             return;
         }
@@ -165,6 +164,23 @@ public abstract class AbstractIMEWrapper {
             this.firstEndPos = first.length();
             this.secondStartPos = (this.firstEndPos + typing.length());
             this.setPreviewText(first + typing + second);
+        }
+    }
+
+    /**
+     * (1) Appends preview text to the current input value.
+     *
+     * @param typing preview text
+     */
+    public final void appendPreviewText(final String typing) {
+        try
+        {
+            this.doAppendPreviewText(typing);
+        }
+        catch (Throwable t) // Catch so we don't crash or freeze
+        {
+            log.error("Error occurred appending text! " + t.getMessage());
+            t.printStackTrace();
         }
     }
 

@@ -1,5 +1,6 @@
 package moe.caramel.chat.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import moe.caramel.chat.controller.EditBoxController;
 import moe.caramel.chat.wrapper.AbstractIMEWrapper;
 import moe.caramel.chat.wrapper.WrapperEditBox;
@@ -7,6 +8,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -146,7 +149,7 @@ public abstract class MixinEditBox implements EditBoxController {
             target = "Lnet/minecraft/client/gui/components/EditBox;moveCursorToEnd(Z)V"
         ), cancellable = true
     )
-    private void setValueInvoke(final String text, final CallbackInfo ci) {
+    private void setValueInvoke(final String finalText, final CallbackInfo ci) {
         if (this.caramelChat$wrapper != null && this.caramelChat$wrapper.valueChanged) {
             ci.cancel();
             // caxton Compatibility
@@ -156,7 +159,7 @@ public abstract class MixinEditBox implements EditBoxController {
             return;
         }
 
-        this.caramelChat$forceUpdateOrigin();
+        this.caramelChat$forceUpdateOrigin(finalText);
     }
 
     @Inject(method = "insertText", at = @At("HEAD"))
@@ -172,8 +175,8 @@ public abstract class MixinEditBox implements EditBoxController {
             target = "Lnet/minecraft/client/gui/components/EditBox;onValueChange(Ljava/lang/String;)V"
         )
     )
-    private void insertTextInvoke(final String text, final CallbackInfo ci) {
-        this.caramelChat$forceUpdateOrigin();
+    private void insertTextInvoke(final String textToWrite, final CallbackInfo ci) {
+        this.caramelChat$forceUpdateOrigin(this.value);
     }
 
     @Inject(method = "onValueChange", at = @At("HEAD"))
@@ -216,9 +219,9 @@ public abstract class MixinEditBox implements EditBoxController {
     }
 
     @Unique
-    private void caramelChat$forceUpdateOrigin() {
+    private void caramelChat$forceUpdateOrigin(final String text) {
         if (this.caramelChat$wrapper != null) {
-            this.caramelChat$wrapper.setOrigin(value);
+            this.caramelChat$wrapper.setOrigin(text);
         }
     }
 }
