@@ -60,7 +60,9 @@ public abstract class AbstractIMEWrapper {
      */
     public final void setToNoneStatus() {
         this.status = InputStatus.NONE;
-        this.setPreviewText(this.origin);
+
+        // Commenting out this line don't seem to have impact?
+        //this.setPreviewText(this.origin);
     }
 
     /**
@@ -157,7 +159,7 @@ public abstract class AbstractIMEWrapper {
             final String second = this.origin.substring(end, lastPos);
 
             // Delete Selected section & Force Update
-            this.insert("");
+            //this.insert("");
             this.origin = this.getTextWithPreview();
 
             // Add Preview

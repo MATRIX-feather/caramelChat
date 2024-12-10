@@ -1,5 +1,6 @@
 package moe.caramel.chat.wrapper;
 
+import moe.caramel.chat.IHavePreeditText;
 import moe.caramel.chat.util.Rect;
 import net.minecraft.client.gui.components.EditBox;
 
@@ -9,12 +10,15 @@ import net.minecraft.client.gui.components.EditBox;
 public final class WrapperEditBox extends AbstractIMEWrapper {
 
     private final EditBox wrapped;
+    private final IHavePreeditText wrappedAsIHavePreedit;
+
     private Runnable insertCallback;
     public boolean valueChanged;
 
     public WrapperEditBox(final EditBox box) {
         super(box.value);
         this.wrapped = box;
+        this.wrappedAsIHavePreedit = (IHavePreeditText) box;
         this.insertCallback = () -> {}; // Empty Callback
     }
 
@@ -22,6 +26,7 @@ public final class WrapperEditBox extends AbstractIMEWrapper {
     protected void insert(final String text) {
         if (this.editable()) {
             this.wrapped.insertText(text);
+            this.wrappedAsIHavePreedit.caramelChat$setPreview(null);
             this.insertCallback.run();
         }
     }
@@ -61,7 +66,7 @@ public final class WrapperEditBox extends AbstractIMEWrapper {
     @Override
     protected void setPreviewText(final String text) {
         this.valueChanged = true;
-        this.wrapped.setValue(text);
+        this.wrappedAsIHavePreedit.caramelChat$setPreview(text);
 
         if (this.wrapped.isFocused()) {
             this.insertCallback.run();

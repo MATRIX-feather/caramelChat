@@ -1,21 +1,22 @@
 package moe.caramel.chat.mixin;
 
-import com.llamalad7.mixinextras.sugar.Local;
+import moe.caramel.chat.IHavePreeditText;
 import moe.caramel.chat.controller.EditBoxController;
 import moe.caramel.chat.wrapper.AbstractIMEWrapper;
 import moe.caramel.chat.wrapper.WrapperEditBox;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,8 @@ import java.util.function.Predicate;
  * EditBox Component Mixin
  */
 @Mixin(value = EditBox.class, priority = 0)
-public abstract class MixinEditBox implements EditBoxController {
+public abstract class MixinEditBox implements EditBoxController, IHavePreeditText
+{
 
     @Unique private WrapperEditBox caramelChat$wrapper;
     @Unique private BiFunction<String, Integer, FormattedCharSequence> caramelChat$formatter;
@@ -36,6 +38,10 @@ public abstract class MixinEditBox implements EditBoxController {
     @Shadow public int highlightPos;
     @Shadow public int cursorPos;
     @Shadow public String value;
+
+    @Shadow @Final public Font font;
+
+    @Shadow private int textColor;
 
     @Redirect(
         method = "<init>(Lnet/minecraft/client/gui/Font;IIIILnet/minecraft/client/gui/components/EditBox;Lnet/minecraft/network/chat/Component;)V",
@@ -55,7 +61,7 @@ public abstract class MixinEditBox implements EditBoxController {
             this.caramelChat$wrapper = new WrapperEditBox((EditBox) (Object) this);
         }
         this.caramelChat$formatter = this.formatter; // Cache
-        this.caramelChat$caretFormatter();
+        //this.caramelChat$caretFormatter();
     }
 
     @Override
@@ -68,7 +74,7 @@ public abstract class MixinEditBox implements EditBoxController {
     @Inject(method = "setFormatter", at = @At("TAIL"))
     private void setFormatter(final BiFunction<String, Integer, FormattedCharSequence> formatter, final CallbackInfo ci) {
         this.caramelChat$formatter = formatter; // Cache
-        this.caramelChat$caretFormatter();
+        //this.caramelChat$caretFormatter();
     }
 
     @Unique
@@ -122,6 +128,7 @@ public abstract class MixinEditBox implements EditBoxController {
             this.caramelChat$cacheHighlightPos = 0;
         } else {
             this.caramelChat$setStatusToNone();
+            this.caramelChat$forceUpdateOrigin(null);
         }
     }
 
@@ -147,19 +154,11 @@ public abstract class MixinEditBox implements EditBoxController {
         at = @At(
             value = "INVOKE", shift = At.Shift.BEFORE,
             target = "Lnet/minecraft/client/gui/components/EditBox;moveCursorToEnd(Z)V"
-        ), cancellable = true
+        )
     )
     private void setValueInvoke(final String finalText, final CallbackInfo ci) {
-        if (this.caramelChat$wrapper != null && this.caramelChat$wrapper.valueChanged) {
-            ci.cancel();
-            // caxton Compatibility
-            this.cursorPos = this.caramelChat$cacheCursorPos;
-            this.highlightPos = this.caramelChat$cacheHighlightPos;
-            this.caramelChat$wrapper.valueChanged = false;
-            return;
-        }
-
         this.caramelChat$forceUpdateOrigin(finalText);
+        this.caramelChat$setPreview(null);
     }
 
     @Inject(method = "insertText", at = @At("HEAD"))
@@ -177,13 +176,6 @@ public abstract class MixinEditBox implements EditBoxController {
     )
     private void insertTextInvoke(final String textToWrite, final CallbackInfo ci) {
         this.caramelChat$forceUpdateOrigin(this.value);
-    }
-
-    @Inject(method = "onValueChange", at = @At("HEAD"))
-    private void onValueChange(final String text, final CallbackInfo ci) {
-        if (this.caramelChat$wrapper != null) {
-            this.value = this.caramelChat$wrapper.getOrigin();
-        }
     }
 
     @Inject(
@@ -223,5 +215,62 @@ public abstract class MixinEditBox implements EditBoxController {
         if (this.caramelChat$wrapper != null) {
             this.caramelChat$wrapper.setOrigin(text);
         }
+    }
+
+    // =============================== [RENDER]
+    @NotNull
+    @Unique
+    private String caramelChat$preeditString = "";
+
+    @Override
+    public void caramelChat$setPreview(@Nullable String text)
+    {
+        if (text == null) text = "";
+
+        this.caramelChat$preeditString = text;
+    }
+
+    @Override
+    public String caramelChat$getPreedit()
+    {
+        return caramelChat$preeditString;
+    }
+
+    @Inject(
+            method = "renderWidget",
+            at = @At(value = "TAIL")
+    )
+    private void onRender(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci)
+    {
+        this.caramelChat$drawPreedit(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
+    @Unique
+    private void caramelChat$drawPreedit(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick)
+    {
+        if (caramelChat$preeditString.isEmpty() || caramelChat$preeditString.isBlank()) return;
+
+        var asEditBox = (EditBox)(Object)this;
+
+        int padding = 3;
+
+        int height = font.lineHeight + padding * 2;
+
+        int startX = asEditBox.getX();
+        int startY = asEditBox.getY() - height;
+
+        int width = font.width(caramelChat$preeditString);
+
+        int color = caramelChat$color(153, 0, 0, 0);
+
+        guiGraphics.fill(startX, startY - padding, startX + width + 2 * padding, startY + height, color);
+        guiGraphics.drawString(this.font, caramelChat$preeditString,
+                startX + padding,
+                startY + padding,
+                this.textColor);
+    }
+
+    private int caramelChat$color(int alpha, int red, int green, int blue) {
+        return alpha << 24 | red << 16 | green << 8 | blue;
     }
 }
