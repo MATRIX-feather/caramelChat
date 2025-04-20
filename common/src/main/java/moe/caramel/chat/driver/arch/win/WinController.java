@@ -43,7 +43,7 @@ public final class WinController implements IController {
             (str) -> {
                 if (focused != null) {
                     ModLogger.debug("[Native|Java] Done Callback (" + str.toString() + ")");
-                    focused.getWrapper().insertText(str.toString());
+                    focused.getWrapper().submitCompleted(str.toString());
                 }
             },
             // Rect Callback

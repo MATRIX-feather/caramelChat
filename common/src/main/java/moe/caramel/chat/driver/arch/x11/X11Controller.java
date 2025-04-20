@@ -53,7 +53,7 @@ public final class X11Controller implements IController {
         ModLogger.debug("[Native|Java] Preedit Done");
         inputMethodActive = false;
         if (X11Controller.focused != null) {
-            X11Controller.focused.getWrapper().insertText("");
+            X11Controller.focused.getWrapper().submitCompleted("");
         }
         X11Controller.setupKeyboardEvent();
     };
@@ -96,7 +96,7 @@ public final class X11Controller implements IController {
         GLFW.glfwSetCharModsCallback(windowId, (window, codepoint, mods) -> {
             minecraft.execute(() -> {
                 if (X11Controller.focused != null && inputMethodActive) {
-                    X11Controller.focused.getWrapper().insertText(String.valueOf(Character.toChars(codepoint)));
+                    X11Controller.focused.getWrapper().submitCompleted(String.valueOf(Character.toChars(codepoint)));
                 } else {
                     minecraft.keyboardHandler.charTyped(window, codepoint, mods);
                 }

@@ -18,7 +18,7 @@ public final class WrapperSignEditScreen extends AbstractIMEWrapper {
     }
 
     @Override
-    protected void insert(final String text) {
+    protected void submit(final String text) {
         if (this.wrapped.signField != null) {
             this.wrapped.signField.insertText(text);
         }
@@ -60,6 +60,12 @@ public final class WrapperSignEditScreen extends AbstractIMEWrapper {
     protected void setPreviewText(final String text) {
         this.wrapped.setMessage(text);
         this.wrapped.messages[wrapped.line] = text;
+    }
+
+    @Override
+    protected void clearPreviewText()
+    {
+        this.setPreviewText("");
     }
 
     @Override

@@ -46,7 +46,7 @@ public final class X11Operator implements IOperator {
             X11Controller.focused = this;
             this.controller.setFocus(true);
         } else if (X11Controller.focused == this) {
-            this.wrapper.insertText("");
+            this.wrapper.submitCompleted("");
             X11Controller.focused = null;
             this.controller.setFocus(false);
             X11Controller.setupKeyboardEvent();

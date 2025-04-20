@@ -33,11 +33,11 @@ public abstract class MixinPluginXaeroMapWayPoint {
     @Unique
     private void caramelChat$fixIme(final EditBox box) {
         final WrapperEditBox wrapper = EditBoxController.getWrapper(box);
-        wrapper.setInsertCallback(() -> {
-            if (wrapper.getStatus() == AbstractIMEWrapper.InputStatus.PREVIEW) {
-                this.ignoreEditBoxChanges = false;
-                this.postType(box);
-            }
+        wrapper.setInsertCallback(() ->
+        {
+            // Seems unnecessary, in postType, `ignoreEditBoxChanges` is set to TRUE on HEAD anyway.
+            //this.ignoreEditBoxChanges = false;
+            this.postType(box);
         });
     }
 }

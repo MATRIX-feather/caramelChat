@@ -30,7 +30,7 @@ public class DarwinOperator implements IOperator {
             // Insert Text
             (str, position, length) -> {
                 ModLogger.debug("[Native|Java] Textfield (" + uuid + ") received inserted text.");
-                this.wrapper.insertText(str);
+                this.wrapper.submitCompleted(str);
             },
             // Set Marked Text
             (str, position1, length1, position2, length2) -> {

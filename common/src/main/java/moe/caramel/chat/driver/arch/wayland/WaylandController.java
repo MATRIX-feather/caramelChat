@@ -43,13 +43,14 @@ public final class WaylandController implements IController {
                 if (focused != null) {
                     ModLogger.debug("[Native|Java] Preedit Null Callback");
                     focused.getWrapper().appendPreviewText("");
+                    focused.getWrapper().submitCompleted("");
                 }
             },
             // Done
             (str) -> {
                 if (focused != null) {
                     ModLogger.debug("[Native|Java] Done Callback (" + str.toString() + ")");
-                    focused.getWrapper().insertText(str.toString());
+                    focused.getWrapper().submitCompleted(str.toString());
                 }
             },
             // Rect

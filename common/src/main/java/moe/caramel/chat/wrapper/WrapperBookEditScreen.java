@@ -23,7 +23,7 @@ public final class WrapperBookEditScreen extends AbstractIMEWrapper {
     }
 
     @Override
-    protected void insert(final String text) {
+    protected void submit(final String text) {
         if (this.wrapped.isSigning) {
             this.wrapped.titleEdit.insertText(text);
         } else {
@@ -81,6 +81,12 @@ public final class WrapperBookEditScreen extends AbstractIMEWrapper {
         } else {
             this.wrapped.setCurrentPageText(text);
         }
+    }
+
+    @Override
+    protected void clearPreviewText()
+    {
+        setPreviewText("");
     }
 
     @Override

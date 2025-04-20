@@ -218,15 +218,13 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
     }
 
     // =============================== [RENDER]
-    @NotNull
+    @Nullable
     @Unique
     private String caramelChat$preeditString = "";
 
     @Override
     public void caramelChat$setPreview(@Nullable String text)
     {
-        if (text == null) text = "";
-
         this.caramelChat$preeditString = text;
     }
 
@@ -238,7 +236,7 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
 
     @Inject(
             method = "renderWidget",
-            at = @At(value = "TAIL")
+            at = @At(value = "HEAD")
     )
     private void onRender(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci)
     {
@@ -248,7 +246,8 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
     @Unique
     private void caramelChat$drawPreedit(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick)
     {
-        if (caramelChat$preeditString.isEmpty() || caramelChat$preeditString.isBlank()) return;
+        if (caramelChat$preeditString == null || caramelChat$preeditString.isBlank())
+            return;
 
         var asEditBox = (EditBox)(Object)this;
 
@@ -257,13 +256,17 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
         int height = font.lineHeight + padding * 2;
 
         int startX = asEditBox.getX();
-        int startY = asEditBox.getY() - height;
+        int startY = asEditBox.getY() - height - padding;
+
+        // Move down if we reached out of the screen
+        if (startY < 0)
+            startY = asEditBox.getY();
 
         int width = font.width(caramelChat$preeditString);
 
         int color = caramelChat$color(153, 0, 0, 0);
 
-        guiGraphics.fill(startX, startY - padding, startX + width + 2 * padding, startY + height, color);
+        guiGraphics.fill(startX, startY, startX + width + 2 * padding, startY + padding + height, color);
         guiGraphics.drawString(this.font, caramelChat$preeditString,
                 startX + padding,
                 startY + padding,

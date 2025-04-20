@@ -23,7 +23,7 @@ public final class WrapperEditBox extends AbstractIMEWrapper {
     }
 
     @Override
-    protected void insert(final String text) {
+    protected void submit(final String text) {
         if (this.editable()) {
             this.wrapped.insertText(text);
             this.wrappedAsIHavePreedit.caramelChat$setPreview(null);
@@ -71,6 +71,12 @@ public final class WrapperEditBox extends AbstractIMEWrapper {
         if (this.wrapped.isFocused()) {
             this.insertCallback.run();
         }
+    }
+
+    @Override
+    protected void clearPreviewText()
+    {
+        this.wrappedAsIHavePreedit.caramelChat$setPreview(null);
     }
 
     @Override

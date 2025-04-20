@@ -46,7 +46,7 @@ public final class WaylandOperator implements IOperator {
             WaylandController.focused = this;
             this.controller.setFocus(true);
         } else if (WaylandController.focused == this) {
-            this.wrapper.insertText("");
+            this.wrapper.submitCompleted("");
             WaylandController.focused = null;
             this.controller.setFocus(false);
         }

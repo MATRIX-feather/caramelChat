@@ -4,6 +4,7 @@ import moe.caramel.chat.Main;
 import moe.caramel.chat.driver.IOperator;
 import moe.caramel.chat.util.ModLogger;
 import moe.caramel.chat.util.Rect;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -187,11 +188,11 @@ public abstract class AbstractIMEWrapper {
     }
 
     /**
-     * (2) Put the completed text in the final input value.
+     * Submit completed text to the wrapper.
      *
      * @param input completed text
      */
-    public final void insertText(final String input) {
+    public final void submitCompleted(final @NotNull String input) {
         if (this.blockTyping() || !this.editable()) {
             return;
         }
@@ -201,17 +202,15 @@ public abstract class AbstractIMEWrapper {
         this.firstEndPos = -1;
         this.secondStartPos = -1;
 
-        this.setPreviewText(this.origin);
-        this.insert(input);
+        this.clearPreviewText();
+        this.submit(input);
         this.origin = this.getTextWithPreview();
     }
 
     /**
-     * (2-1) Insert text value into the input component.
-     *
-     * @param text text value
+     * Inner submit (?)
      */
-    protected abstract void insert(final String text);
+    protected abstract void submit(final String text);
 
     // ================================
 
@@ -255,9 +254,15 @@ public abstract class AbstractIMEWrapper {
     /**
      * Sets the current input value, including the preview.
      *
+     * @apiNote You might want to use *clearPreviewText* to clear the text
      * @param text current input value
      */
     protected abstract void setPreviewText(final String text);
+
+    /**
+     * Clear the preview text
+     */
+    protected abstract void clearPreviewText();
 
     /**
      * Gets the rect square structure.
