@@ -26,7 +26,6 @@ public final class X11Controller implements IController {
     @SuppressWarnings("FieldCanBeLocal")
     private final Driver_X11.DrawCallback drawCallback = (caret, chg_first, chg_length, length, iswstring, rawstring, rawwstring, primary, secondary, tertiary) -> {
         ModLogger.debug("[Native|Java] Draw begin");
-        inputMethodActive = true;
 
         final String string = (iswstring ? rawwstring.toString() : rawstring);
 
@@ -51,14 +50,11 @@ public final class X11Controller implements IController {
     @SuppressWarnings("FieldCanBeLocal")
     private final Driver_X11.DoneCallback doneCallback = () -> {
         ModLogger.debug("[Native|Java] Preedit Done");
-        inputMethodActive = false;
         if (X11Controller.focused != null) {
             X11Controller.focused.getWrapper().submitCompleted("");
         }
         X11Controller.setupKeyboardEvent();
     };
-
-    public static boolean inputMethodActive;
 
     /**
      * Create X11 Controller
@@ -95,7 +91,7 @@ public final class X11Controller implements IController {
         minecraft.keyboardHandler.setup(windowId);
         GLFW.glfwSetCharModsCallback(windowId, (window, codepoint, mods) -> {
             minecraft.execute(() -> {
-                if (X11Controller.focused != null && inputMethodActive) {
+                if (X11Controller.focused != null) {
                     X11Controller.focused.getWrapper().submitCompleted(String.valueOf(Character.toChars(codepoint)));
                 } else {
                     minecraft.keyboardHandler.charTyped(window, codepoint, mods);
