@@ -7,7 +7,11 @@ import moe.caramel.chat.wrapper.WrapperEditBox;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractStringWidget;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.FocusableTextWidget;
+import net.minecraft.client.gui.components.MultiLineTextWidget;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.NotNull;
@@ -43,12 +47,15 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
 
     @Shadow private int textColor;
 
+    @Unique private FocusableTextWidget caramelChat$textWidget;
+
     @Redirect(
         method = "<init>(Lnet/minecraft/client/gui/Font;IIIILnet/minecraft/client/gui/components/EditBox;Lnet/minecraft/network/chat/Component;)V",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/EditBox;setValue(Ljava/lang/String;)V")
     )
     private void init(final EditBox self, final String value) {
         this.caramelChat$wrapper = new WrapperEditBox((EditBox) (Object) this);
+        this.caramelChat$textWidget = new FocusableTextWidget(4096, Component.literal("The quick brown fox jumped over the lazy dog."), font);
         self.setValue(value);
     }
 
@@ -60,6 +67,11 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
         if (this.caramelChat$wrapper == null) {
             this.caramelChat$wrapper = new WrapperEditBox((EditBox) (Object) this);
         }
+
+        if (caramelChat$textWidget == null) {
+            this.caramelChat$textWidget = new FocusableTextWidget(4096, Component.literal("The quick brown fox jumped over the lazy dog."), font);
+        }
+
         this.caramelChat$formatter = this.formatter; // Cache
         //this.caramelChat$caretFormatter();
     }
@@ -226,6 +238,9 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
     public void caramelChat$setPreview(@Nullable String text)
     {
         this.caramelChat$preeditString = text;
+
+        if (text != null)
+            this.caramelChat$textWidget.setMessage(Component.literal(text));
     }
 
     @Override
@@ -251,29 +266,22 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
 
         var asEditBox = (EditBox)(Object)this;
 
-        int padding = 3;
+        // The padding of the FocusableTextWidget
+        int padding = 4;
 
-        int height = font.lineHeight + padding * 2;
+        int height = font.lineHeight;
 
-        int startX = asEditBox.getX();
-        int startY = asEditBox.getY() - height - padding;
+        int startY = asEditBox.getY() - height - padding - 2;
 
         // Move down if we reached out of the screen
         if (startY < 0)
             startY = asEditBox.getY();
 
-        int width = font.width(caramelChat$preeditString);
+        caramelChat$textWidget.setX(asEditBox.getX() + padding);
+        caramelChat$textWidget.setY(startY);
+        caramelChat$textWidget.setHeight(font.lineHeight);
+        caramelChat$textWidget.setWidth(font.width(caramelChat$textWidget.getMessage()));
 
-        int color = caramelChat$color(153, 0, 0, 0);
-
-        guiGraphics.fill(startX, startY, startX + width + 2 * padding, startY + padding + height, color);
-        guiGraphics.drawString(this.font, caramelChat$preeditString,
-                startX + padding,
-                startY + padding,
-                this.textColor);
-    }
-
-    private int caramelChat$color(int alpha, int red, int green, int blue) {
-        return alpha << 24 | red << 16 | green << 8 | blue;
+        caramelChat$textWidget.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 }
