@@ -2,14 +2,19 @@ package moe.caramel.chat.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import moe.caramel.chat.IHavePreeditText;
 import moe.caramel.chat.controller.ScreenController;
 import moe.caramel.chat.wrapper.AbstractIMEWrapper;
 import moe.caramel.chat.wrapper.WrapperSignEditScreen;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.FocusableTextWidget;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -27,7 +32,7 @@ import java.util.function.Consumer;
  * SignEdit Screen Mixin
  */
 @Mixin(value = AbstractSignEditScreen.class, priority = 0)
-public final class MixinSignEditScreen implements ScreenController {
+public final class MixinSignEditScreen implements ScreenController, IHavePreeditText {
 
     @Unique private WrapperSignEditScreen caramelChat$wrapper;
     @Unique private boolean caramelChat$lazyInit;
@@ -35,10 +40,27 @@ public final class MixinSignEditScreen implements ScreenController {
     @Shadow @Final public SignBlockEntity sign;
     @Shadow public int line;
 
+    @Unique
+    private void caramelChat$tryInitTextWidget()
+    {
+        var asSignEditScreen = (AbstractSignEditScreen)(Object)this;
+        if (caramelChat$textWidget != null)
+        {
+            caramelChat$textWidget.setX(asSignEditScreen.width / 2);
+            return;
+        }
+
+        var font = asSignEditScreen.font;
+
+        this.caramelChat$textWidget = new FocusableTextWidget(4096, Component.literal("The quick brown fox jumped over the lazy dog."), font);
+        caramelChat$textWidget.setCentered(true);
+    }
+
     @Inject(method = "init", at = @At("HEAD"))
     private void init(final CallbackInfo ci) {
         this.caramelChat$wrapper = new WrapperSignEditScreen((AbstractSignEditScreen) (Object) this);
         this.caramelChat$wrapper.setOrigin();
+        caramelChat$tryInitTextWidget();
     }
 
     @Inject(method = "tick", at = @At("HEAD"))
@@ -46,6 +68,7 @@ public final class MixinSignEditScreen implements ScreenController {
         // Stendhal mod creates a new signField... :scream:
         if (!caramelChat$lazyInit && signField != null) {
             this.caramelChat$lazyInit = true;
+            caramelChat$tryInitTextWidget();
 
             final Consumer<String> previous = (signField.setMessageFn);
             this.signField.setMessageFn = (value) -> {
@@ -78,36 +101,66 @@ public final class MixinSignEditScreen implements ScreenController {
         return result;
     }
 
-    @WrapOperation(
-        method = "renderSignText",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/GuiGraphics;drawString(Lnet/minecraft/client/gui/Font;Ljava/lang/String;IIIZ)I",
-            ordinal = 0
-        )
+    @Unique
+    private FocusableTextWidget caramelChat$textWidget;
+
+    @Unique
+    @Nullable
+    private String caramelChat$preeditString = "";
+
+    @Override
+    public void caramelChat$setPreview(@Nullable String text)
+    {
+        caramelChat$preeditString = text;
+
+        if (caramelChat$textWidget != null) {
+            if (text != null && !text.isBlank())
+                caramelChat$textWidget.setMessage(Component.literal(text));
+            else
+                caramelChat$textWidget.setMessage(Component.empty());
+        }
+    }
+
+    @Override
+    public String caramelChat$getPreedit()
+    {
+        return caramelChat$preeditString;
+    }
+
+    @Inject(
+            method = "render",
+            at = @At(value = "TAIL")
     )
-    private int renderCaret(final GuiGraphics instance, final Font font, final String text, final int x, final int y, final int color, final boolean dropShadow, final Operation<Integer> original) {
-        // Check IME Status
-        if (text.isEmpty() || caramelChat$wrapper.getStatus() == AbstractIMEWrapper.InputStatus.NONE) {
-            return original.call(instance, font, text, x, y, color, dropShadow);
-        }
+    private void onRender(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci)
+    {
+        this.caramelChat$drawPreedit(guiGraphics, mouseX, mouseY, partialTick);
+    }
 
-        // Line Check (stupid way...)
-        final int lineHeight = this.sign.getTextLineHeight();
-        final int centerHeight = (4 * lineHeight / 2);
-        final int line = ((y + centerHeight) / lineHeight);
-        if (line != this.line) {
-            return original.call(instance, font, text, x, y, color, dropShadow);
-        }
+    @Unique
+    private void caramelChat$drawPreedit(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick)
+    {
+        if (caramelChat$preeditString == null || caramelChat$preeditString.isBlank())
+            return;
 
-        // Render Caret
-        final int firstEndPos = caramelChat$wrapper.getFirstEndPos();
-        final int secondStartPos = caramelChat$wrapper.getSecondStartPos();
+        var asSignEditScreen = (AbstractSignEditScreen)(Object)this;
 
-        final String first = text.substring(0, firstEndPos);
-        final String input = text.substring(firstEndPos, secondStartPos);
-        final String second = text.substring(secondStartPos);
-        final String result = (first + ChatFormatting.UNDERLINE + input + ChatFormatting.RESET + second); // OMG..
-        return original.call(instance, font, result, x, y, color, dropShadow);
+        // The padding of the FocusableTextWidget
+        int padding = 4;
+        var font = asSignEditScreen.font;
+
+        int height = font.lineHeight;
+
+        int startY = 0;
+
+        // Move down if we reached out of the screen
+        //if (startY < 0)
+        //    startY = asEditBox.getY();
+
+        caramelChat$textWidget.setX(0 + padding);
+        caramelChat$textWidget.setY(startY);
+        caramelChat$textWidget.setHeight(font.lineHeight);
+        caramelChat$textWidget.setWidth(font.width(caramelChat$textWidget.getMessage()));
+
+        caramelChat$textWidget.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 }

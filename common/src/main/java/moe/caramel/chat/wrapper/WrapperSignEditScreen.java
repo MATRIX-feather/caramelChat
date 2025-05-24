@@ -1,6 +1,9 @@
 package moe.caramel.chat.wrapper;
 
+import moe.caramel.chat.IHavePreeditText;
 import moe.caramel.chat.util.Rect;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
 import net.minecraft.client.gui.screens.inventory.HangingSignEditScreen;
 import net.minecraft.world.level.block.StandingSignBlock;
@@ -11,9 +14,11 @@ import net.minecraft.world.level.block.StandingSignBlock;
 public final class WrapperSignEditScreen extends AbstractIMEWrapper {
 
     private final AbstractSignEditScreen wrapped;
+    private final IHavePreeditText wrappedAsIHavePreedit;
 
     public WrapperSignEditScreen(final AbstractSignEditScreen screen) {
         this.wrapped = screen;
+        this.wrappedAsIHavePreedit = (IHavePreeditText) screen;
         this.setFocused(true);
     }
 
@@ -58,8 +63,7 @@ public final class WrapperSignEditScreen extends AbstractIMEWrapper {
 
     @Override
     protected void setPreviewText(final String text) {
-        this.wrapped.setMessage(text);
-        this.wrapped.messages[wrapped.line] = text;
+        this.wrappedAsIHavePreedit.caramelChat$setPreview(text);
     }
 
     @Override
