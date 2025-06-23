@@ -121,7 +121,7 @@ public final class MixinSignEditScreen implements ScreenController, IHavePreedit
     }
 
     @Override
-    public String caramelChat$getPreedit()
+    public String caramelChat$getPreview()
     {
         return caramelChat$preeditString;
     }

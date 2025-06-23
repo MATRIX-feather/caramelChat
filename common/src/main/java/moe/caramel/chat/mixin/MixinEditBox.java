@@ -244,7 +244,7 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
     }
 
     @Override
-    public String caramelChat$getPreedit()
+    public String caramelChat$getPreview()
     {
         return caramelChat$preeditString;
     }

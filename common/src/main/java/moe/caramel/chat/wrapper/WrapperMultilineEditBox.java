@@ -1,5 +1,6 @@
 package moe.caramel.chat.wrapper;
 
+import moe.caramel.chat.IHavePreeditText;
 import moe.caramel.chat.util.Rect;
 import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.client.gui.components.MultilineTextField.StringView;
@@ -10,18 +11,26 @@ import net.minecraft.client.gui.components.MultilineTextField.StringView;
 public final class WrapperMultilineEditBox extends AbstractIMEWrapper {
 
     private final MultiLineEditBox wrapped;
+    private final IHavePreeditText wrappedAsIHavePreedit;
     public boolean valueChanged;
 
     public WrapperMultilineEditBox(final MultiLineEditBox textField) {
         super(textField.getValue());
         this.wrapped = textField;
+        this.wrappedAsIHavePreedit = (IHavePreeditText) textField;
     }
 
     @Override
-    protected void insert(final String text) {
+    protected void submit(final String text) {
         if (this.editable()) {
             this.wrapped.textField.insertText(text);
         }
+    }
+
+    @Override
+    protected void clearPreviewText()
+    {
+        wrappedAsIHavePreedit.caramelChat$setPreview(null);
     }
 
     @Override
@@ -47,8 +56,10 @@ public final class WrapperMultilineEditBox extends AbstractIMEWrapper {
     @Override
     protected void setPreviewText(final String text) {
         this.valueChanged = true;
-        this.wrapped.textField.value = text;
-        this.wrapped.textField.reflowDisplayLines();
+
+        this.wrappedAsIHavePreedit.caramelChat$setPreview(text);
+        //this.wrapped.textField.value = text;
+        //this.wrapped.textField.reflowDisplayLines();
     }
 
     @Override

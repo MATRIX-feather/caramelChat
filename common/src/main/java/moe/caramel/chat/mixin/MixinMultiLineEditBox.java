@@ -2,14 +2,19 @@ package moe.caramel.chat.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import moe.caramel.chat.IHavePreeditText;
 import moe.caramel.chat.wrapper.AbstractIMEWrapper;
 import moe.caramel.chat.wrapper.AbstractIMEWrapper.InputStatus;
 import moe.caramel.chat.wrapper.WrapperMultilineEditBox;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.FocusableTextWidget;
 import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.client.gui.components.MultilineTextField;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,20 +30,26 @@ import java.util.function.Consumer;
  * MultiLineEditBox Component Mixin
  */
 @Mixin(MultiLineEditBox.class)
-public final class MixinMultiLineEditBox {
+public final class MixinMultiLineEditBox implements IHavePreeditText
+{
 
     @Unique private WrapperMultilineEditBox caramelChat$wrapper;
     @Unique private int caramelChat$viewBeginPos = -1, caramelChat$viewEndPos = -1;
     @Shadow @Final public MultilineTextField textField;
 
+    @Shadow @Final public Font font;
+
+    @Unique private FocusableTextWidget caramelChat$textWidget;
+
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(final CallbackInfo ci) {
         this.caramelChat$wrapper = new WrapperMultilineEditBox((MultiLineEditBox) (Object) this);
         this.caramelChat$replaceValueListener(this.textField.valueListener);
+        this.caramelChat$textWidget = new FocusableTextWidget(1024, Component.literal("The quick brown fox jumped over the lazy dog."), font);
     }
 
     // ================================ (Formatter)
-
+/*
     @ModifyArgs(
         method = "renderContents",
         at = @At(
@@ -116,8 +127,63 @@ public final class MixinMultiLineEditBox {
         // No need to render caret
         original.call(instance, font, text, x, y, color, dropShadow);
     }
-
+*/
     // ================================ (IME)
+
+    //region feather: preedit rendering
+
+    @Nullable
+    @Unique
+    private String caramelChat$preeditString;
+
+    @Override
+    public String caramelChat$getPreview()
+    {
+        return caramelChat$preeditString == null ? "" : caramelChat$preeditString;
+    }
+
+    @Override
+    public void caramelChat$setPreview(@Nullable String text)
+    {
+        caramelChat$preeditString = text;
+    }
+
+    @Inject(
+            method = "renderContents",
+            at = @At(value = "HEAD")
+    )
+    private void onRender(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci)
+    {
+        this.caramelChat$drawPreedit(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
+    @Unique
+    private void caramelChat$drawPreedit(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick)
+    {
+        if (caramelChat$preeditString == null || caramelChat$preeditString.isBlank())
+            return;
+
+        var asEditBox = (MultiLineEditBox)(Object)this;
+
+        // The padding of the FocusableTextWidget
+        int padding = 4;
+
+        int height = font.lineHeight;
+
+        int startY = asEditBox.getY() - height - padding - 2;
+
+        // Move down if we reached out of the screen
+        if (startY < 0)
+            startY = 0;
+
+        caramelChat$textWidget.setX(asEditBox.getX() + padding);
+        caramelChat$textWidget.setY(startY);
+        caramelChat$textWidget.setHeight(font.lineHeight);
+        caramelChat$textWidget.setWidth(font.width(caramelChat$textWidget.getMessage()));
+
+        caramelChat$textWidget.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+    //endregion feather: preedit rendering
 
     @Inject(method = "setValueListener", at = @At("TAIL"), cancellable = true)
     private void setValueListener(final Consumer<String> valueListener, final CallbackInfo ci) {
