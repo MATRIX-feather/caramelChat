@@ -5,11 +5,11 @@
     "minVersion": "0.8.5",
     "required": true,
     "client": [
-        "MixinBookEditScreen",
         "MixinChatScreen",
         "MixinCreativeModeInventoryScreen",
         "MixinEditBox",
         "MixinMinecraft",
+        "MixinMultiLineEditBox",
         "MixinRecipeBookComponent",
         "MixinSelectWorldScreen",
         "MixinSignEditScreen",

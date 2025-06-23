@@ -3,7 +3,6 @@ package moe.caramel.chat.mixin;
 import static moe.caramel.chat.PlatformProvider.getProvider;
 import static net.minecraft.client.Minecraft.UNIFORM_FONT;
 import static net.minecraft.network.chat.Component.translatable;
-import com.mojang.serialization.JavaOps;
 import moe.caramel.chat.Main;
 import moe.caramel.chat.controller.EditBoxController;
 import moe.caramel.chat.driver.KeyboardStatus;
@@ -15,7 +14,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.HoverEvent.ShowText;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.Mth;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,7 +23,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import java.util.Map;
 
 /**
  * Chat screen Mixin
@@ -38,13 +36,7 @@ public abstract class MixinChatScreen {
     @Unique private static final int TOOLTIP_TIME = 500;
     @Unique private static final int FADE_TIME = 250;
     @Unique private static final Component MARK_VERSION = translatable("caramelChat v%s", getProvider().getVersion())
-        .setStyle(Style.EMPTY.withHoverEvent(
-            HoverEvent.CODEC.parse(JavaOps.INSTANCE, Map.of(
-                "action", "show_text", //
-                "value", Map.of("translate", "caramel.chat.redistribution_warn"), // ~1.21.4
-                "content", Map.of("translate", "caramel.chat.redistribution_warn") // 1.21.5~
-            )).getOrThrow()
-        ));
+        .setStyle(Style.EMPTY.withHoverEvent(new ShowText(translatable("caramel.chat.redistribution_warn"))));
 
     @Unique private KeyboardStatus.Language caramelChat$lastLanguage;
     @Unique private long caramelChat$changeTime;

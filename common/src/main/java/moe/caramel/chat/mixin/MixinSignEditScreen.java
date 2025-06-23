@@ -17,7 +17,6 @@ import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -36,8 +35,8 @@ public final class MixinSignEditScreen implements ScreenController, IHavePreedit
 
     @Unique private WrapperSignEditScreen caramelChat$wrapper;
     @Unique private boolean caramelChat$lazyInit;
+    @Unique private int caramelChat$currentRenderLine = -1;
     @Shadow @Nullable public TextFieldHelper signField;
-    @Shadow @Final public SignBlockEntity sign;
     @Shadow public int line;
 
     @Unique

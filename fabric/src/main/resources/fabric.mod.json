@@ -27,8 +27,8 @@
   "accessWidener": "caramelchat.accesswidener",
   "mixins": [ "caramelchat.mixins.json" ],
   "depends": {
-    "fabricloader": ">=0.15.10",
-    "minecraft": ">=1.20.5"
+    "fabricloader": ">=0.16.14",
+    "minecraft": ">=1.21.6"
   },
   "breaks": {
     "lunar": "*",
