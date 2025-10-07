@@ -9,7 +9,7 @@ import net.neoforged.fml.loading.FMLLoader;
 public final class MainNeoForge {
 
     public MainNeoForge() {
-        final String version = FMLLoader.getLoadingModList().getModFileById(MOD_ID).versionString();
+        final String version = FMLLoader.getCurrent().getLoadingModList().getModFileById(MOD_ID).versionString();
         PlatformProvider.setProvider(new NeoForgeProvider(version));
     }
 }
