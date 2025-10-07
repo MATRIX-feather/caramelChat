@@ -148,16 +148,8 @@ public final class MixinSignEditScreen implements ScreenController, IHavePreedit
         int padding = 4;
         var font = asSignEditScreen.font;
 
-        int height = font.lineHeight;
-
-        int startY = 0;
-
-        // Move down if we reached out of the screen
-        //if (startY < 0)
-        //    startY = asEditBox.getY();
-
-        caramelChat$textWidget.setX(0 + padding);
-        caramelChat$textWidget.setY(startY);
+        caramelChat$textWidget.setX(mouseX - padding);
+        caramelChat$textWidget.setY(mouseY - padding);
         caramelChat$textWidget.setHeight(font.lineHeight);
         caramelChat$textWidget.setWidth(font.width(caramelChat$textWidget.getMessage()));
 
