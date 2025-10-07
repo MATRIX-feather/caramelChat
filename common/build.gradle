@@ -18,6 +18,13 @@ architectury {
 }
 
 loom {
-    accessWidenerPath = file("src/main/resources/caramelchat.accesswidener")
+    def aw = file("src/main/resources/caramelchat.accesswidener");
+    if (aw.exists()) {
+        System.out.println("Access Widener found! at " + aw.path)
+        accessWidenerPath.set(aw)
+    }
+    else
+        throw new RuntimeException("Access Widener not present! In file " + aw.path)
+
     mixin { defaultRefmapName = "caramelchat-common.refmap.json" }
 }

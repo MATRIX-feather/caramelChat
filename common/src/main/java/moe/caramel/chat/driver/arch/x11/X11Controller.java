@@ -18,7 +18,7 @@ import org.lwjgl.glfw.GLFWNativeX11;
  */
 public final class X11Controller implements IController {
 
-    private static final long windowId = Minecraft.getInstance().getWindow().getWindow();
+    private static final long windowId = Minecraft.getInstance().getWindow().handle();
     static X11Operator focused;
 
     private final Driver_X11 driver;
@@ -65,7 +65,7 @@ public final class X11Controller implements IController {
         ModLogger.log("[Native] Load the X11 Controller.");
         this.driver = Native.load(Main.copyLibrary("libx11cocoainput.so"), Driver_X11.class);
 
-        final long windowId = Minecraft.getInstance().getWindow().getWindow();
+        final long windowId = Minecraft.getInstance().getWindow().handle();
         this.driver.initialize(
             // Windows Id
             windowId,
@@ -88,13 +88,15 @@ public final class X11Controller implements IController {
 
     public static void setupKeyboardEvent() {
         final Minecraft minecraft = Minecraft.getInstance();
-        minecraft.keyboardHandler.setup(windowId);
+        minecraft.keyboardHandler.setup(Minecraft.getInstance().getWindow());
+
         GLFW.glfwSetCharModsCallback(windowId, (window, codepoint, mods) -> {
             minecraft.execute(() -> {
                 if (X11Controller.focused != null) {
                     X11Controller.focused.getWrapper().submitCompleted(String.valueOf(Character.toChars(codepoint)));
                 } else {
-                    minecraft.keyboardHandler.charTyped(window, codepoint, mods);
+                    System.out.println("FIXME caramelChat X11Controller callback");
+                    //minecraft.keyboardHandler.charTyped(window, codepoint, mods);
                 }
             });
         });

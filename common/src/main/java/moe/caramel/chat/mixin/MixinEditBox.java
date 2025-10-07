@@ -35,9 +35,6 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
 {
 
     @Unique private WrapperEditBox caramelChat$wrapper;
-    @Unique private BiFunction<String, Integer, FormattedCharSequence> caramelChat$formatter;
-    @Unique private int caramelChat$cacheCursorPos, caramelChat$cacheHighlightPos;
-    @Shadow private BiFunction<String, Integer, FormattedCharSequence> formatter;
     @Shadow private boolean canLoseFocus;
     @Shadow public int highlightPos;
     @Shadow public int cursorPos;
@@ -71,63 +68,11 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
         if (caramelChat$textWidget == null) {
             this.caramelChat$textWidget = new FocusableTextWidget(4096, Component.literal("The quick brown fox jumped over the lazy dog."), font);
         }
-
-        this.caramelChat$formatter = this.formatter; // Cache
-        //this.caramelChat$caretFormatter();
     }
 
     @Override
     public WrapperEditBox caramelChat$wrapper() {
         return caramelChat$wrapper;
-    }
-
-    // ================================ (Formatter)
-
-    @Inject(method = "setFormatter", at = @At("TAIL"))
-    private void setFormatter(final BiFunction<String, Integer, FormattedCharSequence> formatter, final CallbackInfo ci) {
-        this.caramelChat$formatter = formatter; // Cache
-        //this.caramelChat$caretFormatter();
-    }
-
-    @Unique
-    private void caramelChat$caretFormatter() {
-        // Set caret renderer
-        this.formatter = ((original, firstPos) -> {
-            /* Original */
-            if (caramelChat$wrapper.getStatus() == AbstractIMEWrapper.InputStatus.NONE) {
-                return caramelChat$formatter.apply(original, firstPos);
-            }
-            /* Warning */
-            else if (caramelChat$wrapper.blockTyping()) {
-                return FormattedCharSequence.forward(original, Style.EMPTY.withColor(ChatFormatting.RED));
-            }
-            /* Custom */
-            else {
-                // Check Position
-                // Empty
-                // FirstPos ex. [ ABCD|EFG}(INPUT)HIJK ]
-                // LastPos ex. [ ABCDEFG(INPUT)HI|JK} ]
-                final int lastPos = (firstPos + original.length()); // firstPos ~ lastPos
-                if (lastPos <= caramelChat$wrapper.getFirstEndPos() || caramelChat$wrapper.getSecondStartPos() < firstPos) {
-                    return caramelChat$formatter.apply(original, firstPos);
-                }
-
-                // Process
-                final int firstLen = (caramelChat$wrapper.getFirstEndPos() - firstPos);
-                final int previewLen = (caramelChat$wrapper.getSecondStartPos() - caramelChat$wrapper.getFirstEndPos());
-                final int inputEndPoint = Math.min(original.length(), (firstLen + previewLen));
-
-                final List<FormattedCharSequence> list = new ArrayList<>();
-                final String first = original.substring(0, firstLen);
-                final String input = original.substring(firstLen, inputEndPoint);
-                final String second = original.substring(inputEndPoint);
-                list.add(FormattedCharSequence.forward(first, Style.EMPTY));
-                list.add(FormattedCharSequence.forward(input, Style.EMPTY.withUnderlined(true)));
-                list.add(FormattedCharSequence.forward(second, Style.EMPTY));
-
-                return FormattedCharSequence.composite(list);
-            }
-        });
     }
 
     // ================================ (IME)
@@ -136,8 +81,7 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
     private void setValueHead(final String text, final CallbackInfo ci) {
         // setStatusToNone -> forceUpdateOrigin -> onValueChange
         if (this.caramelChat$wrapper != null && this.caramelChat$wrapper.valueChanged) {
-            this.caramelChat$cacheCursorPos = 0;
-            this.caramelChat$cacheHighlightPos = 0;
+            //todo: Remove this
         } else {
             this.caramelChat$setStatusToNone();
             this.caramelChat$forceUpdateOrigin(null);
@@ -153,8 +97,6 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
     )
     private boolean setValuePredicateTest(final Predicate<String> predicate, final Object value) {
         if (this.caramelChat$wrapper != null && this.caramelChat$wrapper.valueChanged) {
-            this.caramelChat$cacheCursorPos = this.cursorPos;
-            this.caramelChat$cacheHighlightPos = this.highlightPos;
             return true;
         }
 

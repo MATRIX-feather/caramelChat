@@ -8,7 +8,14 @@ architectury {
 }
 
 loom {
-    accessWidenerPath = project(":common").loom.accessWidenerPath
+    def aw = project(":common").file("src/main/resources/caramelchat.accesswidener");
+    if (aw.exists()) {
+        System.out.println("Access Widener found! at " + aw.path)
+        accessWidenerPath.set(aw)
+    }
+    else {
+        throw new RuntimeException("Access Widener not present! In file " + aw.path)
+    }
 
     // for Debug
     runs {

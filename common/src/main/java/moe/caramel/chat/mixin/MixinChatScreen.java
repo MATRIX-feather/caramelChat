@@ -14,6 +14,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.HoverEvent.ShowText;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.Mth;
@@ -88,7 +89,7 @@ public abstract class MixinChatScreen {
 
         /* Calculate Position */
         final CommandSuggestions suggestions = this.commandSuggestions;
-        final Component display = Component.literal(status.display()).withStyle(style -> style.withFont(UNIFORM_FONT));
+        final Component display = Component.literal(status.display()).withStyle(style -> style.withFont(FontDescription.DEFAULT));
 
         int borderStartX = 2;
         int borderEndX = (borderStartX + Mth.floor(screen.font.getSplitter().stringWidth(display) - status.offset()) + 4);
