@@ -52,7 +52,7 @@ public final class MixinSignEditScreen implements ScreenController, IHavePreedit
 
         var font = asSignEditScreen.font;
 
-        this.caramelChat$textWidget = new FocusableTextWidget(4096, Component.literal("The quick brown fox jumped over the lazy dog."), font);
+        this.caramelChat$textWidget = FocusableTextWidget.builder(Component.literal("The quick brown fox jumped over the lazy dog."), font, 4096).build();
         caramelChat$textWidget.setCentered(true);
     }
 

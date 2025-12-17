@@ -45,7 +45,7 @@ public final class MixinMultiLineEditBox implements IHavePreeditText
     private void init(final CallbackInfo ci) {
         this.caramelChat$wrapper = new WrapperMultilineEditBox((MultiLineEditBox) (Object) this);
         this.caramelChat$replaceValueListener(this.textField.valueListener);
-        this.caramelChat$textWidget = new FocusableTextWidget(1024, Component.literal("The quick brown fox jumped over the lazy dog."), font);
+        this.caramelChat$textWidget = FocusableTextWidget.builder(Component.literal("The quick brown fox jumped over the lazy dog."), font, 4096).build();
     }
 
     // ================================ (Formatter)

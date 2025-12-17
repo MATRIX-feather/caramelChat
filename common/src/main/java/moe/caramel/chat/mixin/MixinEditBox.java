@@ -52,7 +52,7 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
     )
     private void init(final EditBox self, final String value) {
         this.caramelChat$wrapper = new WrapperEditBox((EditBox) (Object) this);
-        this.caramelChat$textWidget = new FocusableTextWidget(4096, Component.literal("The quick brown fox jumped over the lazy dog."), font);
+        this.caramelChat$textWidget = FocusableTextWidget.builder(Component.literal("The quick brown fox jumped over the lazy dog."), font, 4096).build();
         self.setValue(value);
     }
 
@@ -66,7 +66,7 @@ public abstract class MixinEditBox implements EditBoxController, IHavePreeditTex
         }
 
         if (caramelChat$textWidget == null) {
-            this.caramelChat$textWidget = new FocusableTextWidget(4096, Component.literal("The quick brown fox jumped over the lazy dog."), font);
+            this.caramelChat$textWidget = FocusableTextWidget.builder(Component.literal("The quick brown fox jumped over the lazy dog."), font, 4096).build();
         }
     }
 
